@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/tarinokswebsite-dev/admin/static/css/main.5be3c5d0.css",
-    "main.js": "/tarinokswebsite-dev/admin/static/js/main.c744eeef.js",
-    "static/js/453.3c43e5e0.chunk.js": "/tarinokswebsite-dev/admin/static/js/453.3c43e5e0.chunk.js",
-    "index.html": "/tarinokswebsite-dev/admin/index.html",
-    "main.5be3c5d0.css.map": "/tarinokswebsite-dev/admin/static/css/main.5be3c5d0.css.map",
-    "main.c744eeef.js.map": "/tarinokswebsite-dev/admin/static/js/main.c744eeef.js.map",
-    "453.3c43e5e0.chunk.js.map": "/tarinokswebsite-dev/admin/static/js/453.3c43e5e0.chunk.js.map"
+    "main.css": "/admin/static/css/main.5be3c5d0.css",
+    "main.js": "/admin/static/js/main.b9441917.js",
+    "static/js/453.3c43e5e0.chunk.js": "/admin/static/js/453.3c43e5e0.chunk.js",
+    "index.html": "/admin/index.html",
+    "main.5be3c5d0.css.map": "/admin/static/css/main.5be3c5d0.css.map",
+    "main.b9441917.js.map": "/admin/static/js/main.b9441917.js.map",
+    "453.3c43e5e0.chunk.js.map": "/admin/static/js/453.3c43e5e0.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.5be3c5d0.css",
-    "static/js/main.c744eeef.js"
+    "static/js/main.b9441917.js"
   ]
 }
