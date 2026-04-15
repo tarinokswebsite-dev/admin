@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/Login.css'
 
-const USERNAME = 'tarinkos'
-const PASSWORD = 'tarinkos123@'
+const USERNAME = 'tarinoks'
+const PASSWORD = 'tarinoks123@'
 
 function Login() {
   const [username, setUsername] = useState('')

@@ -468,3 +468,86 @@ label {
   .product-thumb    { width: 42px; height: 42px; }
   .search-input     { min-width: 140px; }
 }
+
+
+/* ── Collapsible form card ── */
+.card--collapsible {
+  padding: 0;
+  overflow: hidden;
+}
+
+.collapse-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: Barlow, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(10, 10, 10);
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.collapse-toggle:hover {
+  background: rgb(242, 244, 247);
+}
+
+.collapse-toggle--open {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.collapse-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.collapse-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgb(10, 10, 10);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.collapse-toggle--open .collapse-icon {
+  background: #dc2626;
+}
+
+.collapse-chevron {
+  font-size: 11px;
+  color: #9ca3af;
+  transition: transform 0.25s;
+}
+
+/* Animate body open/close */
+.collapse-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(.22, 1, .36, 1);
+}
+
+.collapse-body--open {
+  grid-template-rows: 1fr;
+}
+
+.collapse-body-inner {
+  overflow: hidden;
+  padding: 0 28px;
+}
+
+.collapse-body--open .collapse-body-inner {
+  padding: 24px 28px 28px;
+}

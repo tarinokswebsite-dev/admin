@@ -1,3 +1,4 @@
+'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/Admin.css'
@@ -8,12 +9,10 @@ export default function Admin() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('products')
 
-  // ── shared ──
   const [msg, setMsg] = useState({ text: '', type: '' })
   const [loading, setLoading] = useState(false)
   const [dbStatus, setDbStatus] = useState(null)
 
-  // ── products ──
   const [products, setProducts] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [editingProduct, setEditingProduct] = useState(null)
@@ -22,18 +21,17 @@ export default function Admin() {
   const [galleryFiles, setGalleryFiles] = useState([])
   const [removeGalleryIds, setRemoveGalleryIds] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [formOpen, setFormOpen] = useState(false)
 
-  // ── categories ──
   const [categories, setCategories] = useState([])
   const [editingCategory, setEditingCategory] = useState(null)
   const [categoryForm, setCategoryForm] = useState({ ka: '', en: '', ru: '' })
 
-  // ── social ──
   const [social, setSocial] = useState({ whatsapp: '', facebook: '' })
   const [savingSocial, setSavingSocial] = useState(false)
 
   function emptyProductForm() {
-    return { name_ka: '', name_en: '', name_ru: '', desc_ka: '', desc_en: '', desc_ru: '', price: '', category: '' }
+    return { name_ka: '', name_en: '', name_ru: '', desc_ka: '', desc_en: '', desc_ru: '', price: '', category: '', inStock: true }
   }
 
   const flash = (text, type = 'success') => {
@@ -41,7 +39,6 @@ export default function Admin() {
     setTimeout(() => setMsg({ text: '', type: '' }), 4000)
   }
 
-  // ── init ──
   useEffect(() => {
     checkDb()
     fetchProducts()
@@ -57,7 +54,6 @@ export default function Admin() {
     } catch { setDbStatus('error') }
   }
 
-  // ── Products ──
   const fetchProducts = useCallback(async (search = '') => {
     setLoadingProducts(true)
     try {
@@ -78,7 +74,7 @@ export default function Admin() {
 
     setLoading(true)
     const fd = new FormData()
-    Object.entries(productForm).forEach(([k, v]) => { if (v) fd.append(k, v) })
+    Object.entries(productForm).forEach(([k, v]) => { if (v !== '' && v !== null && v !== undefined) fd.append(k, v) })
     if (mainImageFile) fd.append('mainImage', mainImageFile)
     galleryFiles.forEach(f => fd.append('gallery', f))
     if (removeGalleryIds.length) fd.append('removeGalleryIds', JSON.stringify(removeGalleryIds))
@@ -105,6 +101,7 @@ export default function Admin() {
     setGalleryFiles([])
     setRemoveGalleryIds([])
     setEditingProduct(null)
+    setFormOpen(false)
   }
 
   const startEditProduct = (p) => {
@@ -113,9 +110,11 @@ export default function Admin() {
       name_ka: p.name?.ka || '', name_en: p.name?.en || '', name_ru: p.name?.ru || '',
       desc_ka: p.description?.ka || '', desc_en: p.description?.en || '', desc_ru: p.description?.ru || '',
       price: p.price?.toString() || '',
-      category: p.category?._id || ''
+      category: p.category?._id || '',
+      inStock: p.inStock !== false,
     })
     setRemoveGalleryIds([])
+    setFormOpen(true)
     setActiveTab('products')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -135,7 +134,6 @@ export default function Admin() {
     )
   }
 
-  // ── Categories ──
   const fetchCategories = async () => {
     try {
       const r = await fetch(`${API}/categories`)
@@ -176,7 +174,6 @@ export default function Admin() {
     } catch { flash('წაშლა ვერ მოხერხდა', 'error') }
   }
 
-  // ── Social ──
   const fetchSocial = async () => {
     try {
       const r = await fetch(`${API}/social`)
@@ -213,7 +210,6 @@ export default function Admin() {
   return (
     <div className="admin-root">
 
-      {/* ── Header ── */}
       <header className="admin-header">
         <div className="admin-header-inner">
           <div className="admin-logo">
@@ -229,7 +225,6 @@ export default function Admin() {
             <button className="logout-btn" onClick={handleLogout}>გასვლა</button>
           </div>
         </div>
-
         <nav className="admin-tabs">
           {tabs.map(t => (
             <button
@@ -244,7 +239,6 @@ export default function Admin() {
         </nav>
       </header>
 
-      {/* ── Flash message ── */}
       {msg.text && (
         <div className={`flash-msg flash-${msg.type}`}>{msg.text}</div>
       )}
@@ -255,133 +249,158 @@ export default function Admin() {
         {activeTab === 'products' && (
           <div className="tab-content">
 
-            {/* Form */}
-            <section className="card">
-              <h2 className="card-title">
-                {editingProduct ? `✏️ რედაქტირება: ${editingProduct.name?.ka}` : '+ ახალი პროდუქტი'}
-              </h2>
+            {/* ── Collapsible form ── */}
+            <section className="card card--collapsible">
+              <button
+                className={`collapse-toggle ${formOpen ? 'collapse-toggle--open' : ''}`}
+                onClick={() => {
+                  if (formOpen && editingProduct) resetProductForm()
+                  else setFormOpen(o => !o)
+                }}
+              >
+                <span className="collapse-toggle-left">
+                  <span className="collapse-icon">{formOpen ? '✕' : '+'}</span>
+                  {editingProduct
+                    ? `✏️ რედაქტირება: ${editingProduct.name?.ka}`
+                    : 'პროდუქტის დამატება'}
+                </span>
+                <span className="collapse-chevron">{formOpen ? '▲' : '▼'}</span>
+              </button>
 
-              <div className="lang-section">
-                <p className="lang-label">🇬🇪 ქართული</p>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>სახელი (KA)</label>
-                    <input className="input" value={productForm.name_ka}
-                      onChange={e => setProductForm(f => ({ ...f, name_ka: e.target.value }))}
-                      placeholder="პროდუქტის სახელი" />
-                  </div>
-                  <div className="form-group form-group-full">
-                    <label>აღწერა (KA)</label>
-                    <textarea className="textarea" value={productForm.desc_ka}
-                      onChange={e => setProductForm(f => ({ ...f, desc_ka: e.target.value }))}
-                      placeholder="აღწერა ქართულად" rows={3} />
-                  </div>
-                </div>
-              </div>
+              <div className={`collapse-body ${formOpen ? 'collapse-body--open' : ''}`}>
+                <div className="collapse-body-inner">
 
-              <div className="lang-section">
-                <p className="lang-label">🇬🇧 English</p>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Name (EN)</label>
-                    <input className="input" value={productForm.name_en}
-                      onChange={e => setProductForm(f => ({ ...f, name_en: e.target.value }))}
-                      placeholder="Product name" />
-                  </div>
-                  <div className="form-group form-group-full">
-                    <label>Description (EN)</label>
-                    <textarea className="textarea" value={productForm.desc_en}
-                      onChange={e => setProductForm(f => ({ ...f, desc_en: e.target.value }))}
-                      placeholder="Description in English" rows={3} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="lang-section">
-                <p className="lang-label">🇷🇺 Русский</p>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Название (RU)</label>
-                    <input className="input" value={productForm.name_ru}
-                      onChange={e => setProductForm(f => ({ ...f, name_ru: e.target.value }))}
-                      placeholder="Название товара" />
-                  </div>
-                  <div className="form-group form-group-full">
-                    <label>Описание (RU)</label>
-                    <textarea className="textarea" value={productForm.desc_ru}
-                      onChange={e => setProductForm(f => ({ ...f, desc_ru: e.target.value }))}
-                      placeholder="Описание на русском" rows={3} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>ფასი (₾)</label>
-                  <input className="input" type="number" min="0" step="0.01"
-                    value={productForm.price}
-                    onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder="0.00" />
-                </div>
-                <div className="form-group">
-                  <label>კატეგორია</label>
-                  <select className="input" value={productForm.category}
-                    onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))}>
-                    <option value="">— კატეგორია —</option>
-                    {categories.map(c => (
-                      <option key={c._id} value={c._id}>{c.name?.ka}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>მთავარი სურათი {editingProduct && '(სურვილისამებრ)'}</label>
-                  <label className="file-label">
-                    <input type="file" accept="image/*" className="file-hidden"
-                      onChange={e => setMainImageFile(e.target.files[0])} />
-                    <span className="file-btn">📁 {mainImageFile ? mainImageFile.name : 'აირჩიეთ'}</span>
-                  </label>
-                  {mainImageFile && (
-                    <img src={URL.createObjectURL(mainImageFile)} alt="preview" className="img-preview" />
-                  )}
-                  {editingProduct?.mainImageUrl && !mainImageFile && (
-                    <img src={editingProduct.mainImageUrl} alt="current" className="img-preview" />
-                  )}
-                </div>
-                <div className="form-group">
-                  <label>გალერეა (მაქს. 10)</label>
-                  <label className="file-label">
-                    <input type="file" accept="image/*" multiple className="file-hidden"
-                      onChange={e => setGalleryFiles(Array.from(e.target.files))} />
-                    <span className="file-btn">📁 {galleryFiles.length > 0 ? `${galleryFiles.length} ფაილი` : 'აირჩიეთ'}</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Existing gallery when editing */}
-              {editingProduct?.galleryImages?.length > 0 && (
-                <div className="gallery-grid">
-                  <p className="gallery-hint">გალერეა — მოსაშლელი სურათები მონიშნეთ:</p>
-                  {editingProduct.galleryImages.map(img => (
-                    <div key={img.publicId}
-                      className={`gallery-thumb ${removeGalleryIds.includes(img.publicId) ? 'gallery-thumb-remove' : ''}`}
-                      onClick={() => toggleRemoveGallery(img.publicId)}>
-                      <img src={img.url} alt="" />
-                      {removeGalleryIds.includes(img.publicId) && <span className="gallery-x">✕</span>}
+                  <div className="lang-section">
+                    <p className="lang-label">🇬🇪 ქართული</p>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>სახელი (KA)</label>
+                        <input className="input" value={productForm.name_ka}
+                          onChange={e => setProductForm(f => ({ ...f, name_ka: e.target.value }))}
+                          placeholder="პროდუქტის სახელი" />
+                      </div>
+                      <div className="form-group form-group-full">
+                        <label>აღწერა (KA)</label>
+                        <textarea className="textarea" value={productForm.desc_ka}
+                          onChange={e => setProductForm(f => ({ ...f, desc_ka: e.target.value }))}
+                          placeholder="აღწერა ქართულად" rows={3} />
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
 
-              <div className="form-actions">
-                {editingProduct && (
-                  <button className="btn-ghost" onClick={resetProductForm}>გაუქმება</button>
-                )}
-                <button className="btn-primary" onClick={handleProductSubmit} disabled={loading}>
-                  {loading ? 'მუშავდება...' : editingProduct ? 'განახლება' : 'დამატება'}
-                </button>
+                  <div className="lang-section">
+                    <p className="lang-label">🇬🇧 English</p>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Name (EN)</label>
+                        <input className="input" value={productForm.name_en}
+                          onChange={e => setProductForm(f => ({ ...f, name_en: e.target.value }))}
+                          placeholder="Product name" />
+                      </div>
+                      <div className="form-group form-group-full">
+                        <label>Description (EN)</label>
+                        <textarea className="textarea" value={productForm.desc_en}
+                          onChange={e => setProductForm(f => ({ ...f, desc_en: e.target.value }))}
+                          placeholder="Description in English" rows={3} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lang-section">
+                    <p className="lang-label">🇷🇺 Русский</p>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Название (RU)</label>
+                        <input className="input" value={productForm.name_ru}
+                          onChange={e => setProductForm(f => ({ ...f, name_ru: e.target.value }))}
+                          placeholder="Название товара" />
+                      </div>
+                      <div className="form-group form-group-full">
+                        <label>Описание (RU)</label>
+                        <textarea className="textarea" value={productForm.desc_ru}
+                          onChange={e => setProductForm(f => ({ ...f, desc_ru: e.target.value }))}
+                          placeholder="Описание на русском" rows={3} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>ფასი (₾)</label>
+                      <input className="input" type="number" min="0" step="0.01"
+                        value={productForm.price}
+                        onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))}
+                        placeholder="0.00" />
+                    </div>
+                    <div className="form-group">
+                      <label>კატეგორია</label>
+                      <select className="input" value={productForm.category}
+                        onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))}>
+                        <option value="">— კატეგორია —</option>
+                        {categories.map(c => (
+                          <option key={c._id} value={c._id}>{c.name?.ka}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>მარაგი</label>
+                      <select className="input" value={productForm.inStock}
+                        onChange={e => setProductForm(f => ({ ...f, inStock: e.target.value === 'true' }))}>
+                        <option value="true">✅ მარაგშია</option>
+                        <option value="false">❌ არ არის მარაგში</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>მთავარი სურათი {editingProduct && '(სურვილისამებრ)'}</label>
+                      <label className="file-label">
+                        <input type="file" accept="image/*" className="file-hidden"
+                          onChange={e => setMainImageFile(e.target.files[0])} />
+                        <span className="file-btn">📁 {mainImageFile ? mainImageFile.name : 'აირჩიეთ'}</span>
+                      </label>
+                      {mainImageFile && (
+                        <img src={URL.createObjectURL(mainImageFile)} alt="preview" className="img-preview" />
+                      )}
+                      {editingProduct?.mainImageUrl && !mainImageFile && (
+                        <img src={editingProduct.mainImageUrl} alt="current" className="img-preview" />
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label>გალერეა (მაქს. 10)</label>
+                      <label className="file-label">
+                        <input type="file" accept="image/*" multiple className="file-hidden"
+                          onChange={e => setGalleryFiles(Array.from(e.target.files))} />
+                        <span className="file-btn">📁 {galleryFiles.length > 0 ? `${galleryFiles.length} ფაილი` : 'აირჩიეთ'}</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {editingProduct?.galleryImages?.length > 0 && (
+                    <div className="gallery-grid">
+                      <p className="gallery-hint">გალერეა — მოსაშლელი სურათები მონიშნეთ:</p>
+                      {editingProduct.galleryImages.map(img => (
+                        <div key={img.publicId}
+                          className={`gallery-thumb ${removeGalleryIds.includes(img.publicId) ? 'gallery-thumb-remove' : ''}`}
+                          onClick={() => toggleRemoveGallery(img.publicId)}>
+                          <img src={img.url} alt="" />
+                          {removeGalleryIds.includes(img.publicId) && <span className="gallery-x">✕</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="form-actions">
+                    {editingProduct && (
+                      <button className="btn-ghost" onClick={resetProductForm}>გაუქმება</button>
+                    )}
+                    <button className="btn-primary" onClick={handleProductSubmit} disabled={loading}>
+                      {loading ? 'მუშავდება...' : editingProduct ? 'განახლება' : 'დამატება'}
+                    </button>
+                  </div>
+
+                </div>
               </div>
             </section>
 
@@ -411,6 +430,9 @@ export default function Admin() {
                         <p className="product-name">{p.name?.ka}</p>
                         <p className="product-sub">{p.name?.en} · {p.name?.ru}</p>
                         {p.category && <span className="cat-tag">{p.category.name?.ka}</span>}
+                        <span style={{ background: p.inStock ? '#16a34a' : '#dc2626', color: '#fff', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', marginLeft: '6px' }}>
+                          {p.inStock ? 'მარაგშია' : 'არ არის'}
+                        </span>
                       </div>
                       <div className="product-price-col">₾{p.price?.toFixed(2)}</div>
                       <div className="product-actions">
