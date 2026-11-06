@@ -25,7 +25,7 @@ export default function Admin() {
 
   const [categories, setCategories] = useState([])
   const [editingCategory, setEditingCategory] = useState(null)
-  const [categoryForm, setCategoryForm] = useState({ ka: '', en: '', ru: '' })
+  const [categoryForm, setCategoryForm] = useState({ ka: '', en: '', ru: '', discountPercent: '' })
 
   const [social, setSocial] = useState({ whatsapp: '', facebook: '' })
   const [savingSocial, setSavingSocial] = useState(false)
@@ -157,7 +157,7 @@ export default function Admin() {
       const d = await r.json()
       if (r.ok) {
         flash(editingCategory ? 'კატეგორია განახლდა ✓' : 'კატეგორია დაემატა ✓')
-        setCategoryForm({ ka: '', en: '', ru: '' })
+        setCategoryForm({ ka: '', en: '', ru: '', discountPercent: '' })
         setEditingCategory(null)
         fetchCategories()
       } else flash(d.error || 'შეცდომა', 'error')
@@ -474,9 +474,18 @@ export default function Admin() {
                     placeholder="Русский" />
                 </div>
               </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ფასდაკლება % (0 = ფასდაკლების გარეშე)</label>
+                  <input className="input" type="number" min="0" max="99"
+                    value={categoryForm.discountPercent}
+                    onChange={e => setCategoryForm(f => ({ ...f, discountPercent: e.target.value }))}
+                    placeholder="მაგ. 22" />
+                </div>
+              </div>
               <div className="form-actions">
                 {editingCategory && (
-                  <button className="btn-ghost" onClick={() => { setEditingCategory(null); setCategoryForm({ ka: '', en: '', ru: '' }) }}>
+                  <button className="btn-ghost" onClick={() => { setEditingCategory(null); setCategoryForm({ ka: '', en: '', ru: '', discountPercent: '' }) }}>
                     გაუქმება
                   </button>
                 )}
@@ -498,11 +507,12 @@ export default function Admin() {
                         <span className="cat-ka">{c.name?.ka}</span>
                         <span className="cat-other">{c.name?.en}</span>
                         <span className="cat-other">{c.name?.ru}</span>
+                        {c.discountPercent > 0 && <span className="cat-other">🏷️ -{c.discountPercent}%</span>}
                       </div>
                       <div className="product-actions">
                         <button className="btn-sm btn-edit" onClick={() => {
                           setEditingCategory(c)
-                          setCategoryForm({ ka: c.name?.ka || '', en: c.name?.en || '', ru: c.name?.ru || '' })
+                          setCategoryForm({ ka: c.name?.ka || '', en: c.name?.en || '', ru: c.name?.ru || '', discountPercent: c.discountPercent ? String(c.discountPercent) : '' })
                           window.scrollTo({ top: 0, behavior: 'smooth' })
                         }}>✏️</button>
                         <button className="btn-sm btn-del" onClick={() => deleteCategory(c)}>🗑️</button>
